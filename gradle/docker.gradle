@@ -30,18 +30,5 @@ task buildDocker(type: DockerBuildImage, dependsOn: 'copyDockerFiles') {
     description = "Package application as Docker image"
     group = "Docker"
     inputDir = project.file("${project.buildDir}/docker")
-    tags = ["${rfbImageName}:latest".toString(), "${rfbImageName}:${project.version}".toString()]
-}
-
-task pushDockerLatest(type: DockerPushImage, dependsOn: 'buildDocker') {
-    imageName = rfbImageName
-    tag = "latest"
-}
-
-/**
- * Use to push project version tag to docker hub
- */
-task pushDockerVersionTag(type: DockerPushImage, dependsOn: 'buildDocker') {
-    imageName = rfbImageName
-    tag =  "${project.version}".toString()
+    tags = ["rfbloyalty:latest".toString(), "rfbloyalty:${project.version}".toString()]
 }
