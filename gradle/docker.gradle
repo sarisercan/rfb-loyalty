@@ -1,28 +1,34 @@
 buildscript {
     repositories {
-        gradlePluginPortal()
+        jcenter()
     }
+
     dependencies {
-        classpath "gradle.plugin.com.google.cloud.tools:jib-gradle-plugin:0.9.11"
+        classpath 'com.bmuschko:gradle-docker-plugin:3.1.0'
     }
 }
 
-apply plugin: com.google.cloud.tools.jib.gradle.JibPlugin
+apply plugin: com.bmuschko.gradle.docker.DockerRemoteApiPlugin
 
-jib {
-    from {
-        image = 'openjdk:8-jre-alpine'
-    }
-    to {
-        image = 'rfbloyalty:latest'
-    }
-    container {
-        entrypoint = ['sh', '-c', 'chmod +x /entrypoint.sh && sync && /entrypoint.sh']
-        ports = ['8080']
-        environment = [
-            SPRING_OUTPUT_ANSI_ENABLED: 'ALWAYS',
-            JHIPSTER_SLEEP: '0'
-        ]
-        useCurrentTimestamp = true
-    }
+import com.bmuschko.gradle.docker.tasks.image.DockerBuildImage
+
+docker {
+    url = System.env.DOCKER_HOST
+    certPath = new File(System.env.DOCKER_CERT_PATH)
+}
+
+task copyDockerFiles(type: Copy) {
+    description = "Copy Dockerfile and required data to build directory"
+    from 'src/main/docker'
+    from "${project.buildDir}/libs"
+    into { "${project.buildDir}/docker" }
+    include "*"
+    exclude "**/*.yml"
+}
+
+task buildDocker(type: DockerBuildImage, dependsOn: 'copyDockerFiles') {
+    description = "Package application as Docker image"
+    group = "Docker"
+    inputDir = project.file("${project.buildDir}/docker")
+    tags = ["rfbloyalty:latest".toString(), "rfbloyalty:${project.version}".toString()]
 }
